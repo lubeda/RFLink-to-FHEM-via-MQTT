@@ -1,13 +1,13 @@
 # RFLink-to-FHEM-via-MQTT
-[RFlink] (http://rflink.nl) is a cool solution to work with 433 MHz gadgets, like remote-controlled Poweroutlets.
+[RFlink](http://rflink.nl) is a cool solution to work with 433 MHz gadgets, like remote-controlled Poweroutlets.
 
-[FHEM] (http://www.fhem.de) is a cool software for homeautomation.
+[FHEM](http://www.fhem.de) is a cool software for homeautomation.
 
-Since there is no module in FHEM available i was searching for a way to user RFlink from FHEM.
+Since there is no module in FHEM available i was searching for a way to use RFlink from FHEM.
 
-My first try was [rflink-to-mqtt] (https://github.com/Phileep/rflink-to-mqtt) which didn't work with FHEM like expected. But for [Openhab] (http://www.openhab.org) it did:simple_smile:.
+My first try was [rflink-to-mqtt](https://github.com/Phileep/rflink-to-mqtt) which didn't work with FHEM like expected. But for [Openhab](http://www.openhab.org) it did. :simple_smile:
 
-So i created a new solution based on this module from @github\Phileep.
+So i created a new solution based on this module from @github/Phileep.
 
 ## How to use
 
