@@ -79,8 +79,11 @@ RFlink/command/FHEM/NewKaku/01dd77d5/1
 ```
 define NewKaku_01dd77d5 MQTT_DEVICE
 attr NewKaku_01dd77d5 IODev Mosquitto195
-attr NewKaku_01dd77d5 autoSubscribeReadings RFlink/Flat/NewKaku/01dd77d5/1/+
-attr NewKaku_01dd77d5 stateFormat CMD
+attr NewKaku_01dd77d5 autoSubscribeReadings RFlink/FHEM/NewKaku/01dd77d5/1/
+attr NewKaku_01dd77d5 eventMap ON.on OFF:off
+attr NewKaku_01dd77d5 publishSet ON OFF RFlink/command/FHEM/NewKaku/01dd77d5/1
+attr NewKaku_01dd77d5 stateFormat state
+attr NewKaku_01dd77d5 webCmd ON:OFF
 ```
 
 # Watchout
