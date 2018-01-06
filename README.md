@@ -5,9 +5,9 @@
 
 Since there is no module in FHEM available i was searching for a way to use RFlink from FHEM.
 
-My first try was [rflink-to-mqtt](https://github.com/Phileep/rflink-to-mqtt) which didn't work with FHEM like expected. But for [Openhab](http://www.openhab.org) it did. :simple_smile:
+My first try was [rflink-to-mqtt](https://github.com/Phileep/rflink-to-mqtt) which didn't work with FHEM like expected. But for [Openhab](http://www.openhab.org) it did ;-). 
 
-So i created a new solution based on this module from @github/Phileep.
+So i created a new solution based on the module from @github/Phileep .
 
 ## How to use
 
@@ -27,19 +27,27 @@ as json like this:
 {"raw":"20;2A;Xiron;ID=2801;TEMP=0043;HUM=29;BAT=OK;\r","TEMP":6.7,"HUM":29,"BAT":"OK"}
 ```
 
-there is the raw string and the interpreted data with TEMP=6.7 in degree Celsius
+There is the raw string and the interpreted data with TEMP=6.7 in degree Celsius
 
-For FHEM this ist harder to parse, so my module publishes also this topics with the coresponding values:
+For FHEM JSON is harder to parse, so my module publishes also this topics with the coresponding values:
 ```
 RFlink/FHEM/Xiron/2801/TEMP
 RFlink/FHEM/Xiron/2801/HUM
 RFlink/FHEM/Xiron/2801/BAT
 ```
 
+The coresponding FHEM-Device looks like this:
+```
+define Xiron_2801 MQTT_DEVICE
+attr Xiron_2801 IODev Mosquitto195
+attr Xiron_2801 autoSubscribeReadings RFlink/Flat/Xiron/2801/+
+attr Xiron_2801 stateFormat TEMP °C
+```
+
 ## How to send commands
 ### normal
 
-publish the command according to the [documentation] (http://www.rflink.nl/blog2/protref) to the topic
+publish the command according to the [documentation](http://www.rflink.nl/blog2/protref) to the topic
 
 ```
 RFlink/command/
@@ -54,3 +62,15 @@ e.g.
 publish only "ON" or "OFF" to the topic build like this scheme:
 
 RFlink/command/FHEM/NewKaku/01dd77d5/1
+
+#### The FHEM-Device looks like this
+```
+define NewKaku_01dd77d5 MQTT_DEVICE
+attr NewKaku_01dd77d5 IODev Mosquitto195
+attr NewKaku_01dd77d5 autoSubscribeReadings RFlink/Flat/NewKaku/01dd77d5/1/+
+attr NewKaku_01dd77d5 stateFormat CMD
+```
+
+
+# Watchout
+This is a **beta** software, use it at your own risk!!!
