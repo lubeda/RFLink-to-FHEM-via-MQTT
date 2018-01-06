@@ -1,3 +1,6 @@
+# Warning
+This is a **beta** software, use it at your own risk!!!
+
 # RFLink-to-FHEM-via-MQTT
 [RFlink](http://rflink.nl) is a cool solution to work with 433 MHz gadgets, like remote-controlled Poweroutlets.
 
@@ -8,6 +11,15 @@ Since there is no module in FHEM available i was searching for a way to use RFli
 My first try was [rflink-to-mqtt](https://github.com/Phileep/rflink-to-mqtt) which didn't work with FHEM like expected. But for [Openhab](http://www.openhab.org) it did ;-). 
 
 So i created a new solution based on the module from @github/Phileep .
+
+## Setup:
+
+- You need a working RFLink
+- Edit RFLINK-to-FHEM-via-MQTT.ino line 10-12 to your need.
+- compile and upload to a ESP01 module
+- Wire the ESP01 like shown in ESPRFLINKMQTT.png
+- Use a mqtt client to subscribe to `RFlink\#` and see what happens
+- Use your remote to send some commands to your devices or wait until your gadgets send some data
 
 ## How to use
 
@@ -70,7 +82,6 @@ attr NewKaku_01dd77d5 IODev Mosquitto195
 attr NewKaku_01dd77d5 autoSubscribeReadings RFlink/Flat/NewKaku/01dd77d5/1/+
 attr NewKaku_01dd77d5 stateFormat CMD
 ```
-
 
 # Watchout
 This is a **beta** software, use it at your own risk!!!
