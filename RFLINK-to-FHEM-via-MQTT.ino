@@ -9,14 +9,16 @@
 const char* ssid = "MyWiFi"; // network SSID for ESP8266 to connect to
 const char* password = "MyWiFi-Password"; // password for the network above
 const char* mqtt_server = "192.168.178.195"; // address of the MQTT server that we will communicte with */
-boolean debug = false;
+boolean debug =false;
+
+// See Details at https://github.com/lubeda/RFLink-to-FHEM-via-MQTT
 
 //Design Config
 const char* mqtt_prefix_JSON = "RFlink/JSON/"; // Topic Base
 const char* statusTopic = "RFlink/status";
 String commandTopic = "RFlink/command/";
 String debugTopic = "RFlink/debug";
-const char* mqtt_prefix_Flat = "RFlink/Flat/"; // Topic Base
+const char* mqtt_prefix_Flat = "RFlink/FHEM/"; // Topic Base
 const char* client_name = "espRFlink"; // production version client name for MQTT login - must be unique on your system
 
 // Key User Configuration here:
@@ -88,7 +90,7 @@ void callback(const char* topic, byte* payload, unsigned int length) {
         Debug("Callback IN-CMD",String(topic) +"=>" +String(strPayload));
 
         if (String(topic).length() == String(commandTopic).length() ) {
-                swSer.println(strPayload+"\r\n" ); // \n snd data to the RFLink
+                swSer.println("\r"+strPayload+"\r"); // \n snd data to the RFLink
                 Debug("Callback Send Default",strPayload);
                 MQTTclient.publish(statusTopic,result.c_str(),false); // got someting
         } else
@@ -98,8 +100,8 @@ void callback(const char* topic, byte* payload, unsigned int length) {
                 command.replace("/",";");
 
                 result= "10;" + command +";" + strPayload + ";" +"\r\n"; // \n
-                swSer.println(result); // snd data to the RFLink
-                Debug("Callback Send FEHM",result);
+                swSer.println("\n"+result+"\n"); // snd data to the RFLink
+                Debug("Callback Send FHEM",result);
         }
 
 }
@@ -296,7 +298,7 @@ void parseData() {      // split the data into its parts
                 root.remove("SWITCH");
         }
 //FHEM Ausgabe:
-        if ( RFName != "STATUS" )
+        if ( strcmp(RFName,"STATUS" )) // STATUS will be droped
         {
                 root.remove("raw");
                 Debug("Parsedata FHEM Topic",FHEMMQTTTopic);
