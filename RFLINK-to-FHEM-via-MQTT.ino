@@ -10,14 +10,15 @@ const char* ssid = "MyWiFi"; // network SSID for ESP8266 to connect to
 const char* password = "MyWiFi-Password"; // password for the network above
 const char* mqtt_server = "192.168.178.195"; // address of the MQTT server that we will communicte with */
 char* client_name = "espRFLink"; // production version client name for MQTT login - must be unique on your system
+SoftwareSerial swSer(4, 2, false, 256); // RX=GIO04 & TX=GPIO2
 
-const char buffersize=128;
+const char buffersize=240;
 char OutData[buffersize];
 
 boolean DataReady=false;
 
 const char*  statusTopic="RFLink/status";
-String  commandTopic="RFLink/command/";
+String commandTopic="RFLink/command/";
 const char*  dataTopic="RFLink/data";
 
 WiFiClient espClient;
@@ -25,6 +26,8 @@ PubSubClient MQTTClient(espClient);
 
 // array of wind directions - used by weather stations. output from the RFLink under WINDIR is an integr 0-15 - will lookup the array for the compass text version
 String CompassDirTable[17] = {"N","NNE","NE","ENE","E","ESE", "SE","SSE","S","SSW","SW","WSW", "W","WNW","NW","NNW","N"};
+String HStatusTable[4] = {"Normal","Comfortable","Dry","Wet"};
+String BForecastTable[5] = {"No Info","Sunny","Partly Cloudy","Cloudy","Rain"};
 
 void setup_wifi() {
 
@@ -121,14 +124,20 @@ void parseData()
         String StrWork,StrID,StrSWITCH,StrMode;
 
         // Text gesammt
+
         BaseTopic = statusTopic+String("/out");
         MQTTClient.publish(BaseTopic.c_str(), OutData);
 
         StrWork = String(OutData);
+        if ((StrWork.indexOf("STATUS;")>=0) || (StrWork.indexOf("DEBUG;")>=0) {
+            MQTTClient.publish(statusTopic,StrWork.substring(6).c_str());
+            StrWork="";
+        }
 
         if (StrWork.startsWith("20"))
         {
                 BaseTopic = statusTopic;
+                BaseTopic += "/";
                 iRest = 6;
                 StrMode = StrWork.substring(iRest,StrWork.indexOf(";",6));
 
@@ -150,10 +159,9 @@ void parseData()
 
                 StrWork =StrWork.substring(iRest);
 
-                if (StrMode.startsWith("STATUS;") || StrMode.startsWith("Nodo ") || (StrMode.indexOf("=")>=0) ) {
-                    StrTopic = statusTopic+String("/status");
-                    MQTTClient.publish(StrTopic.c_str(), StrWork.c_str());
-                    StrWork = "";
+                if ( StrMode.startsWith("Nodo ") || (StrMode.indexOf("=")>=0) ) {
+                        MQTTClient.publish(statusTopic, StrWork.c_str());
+                        StrWork = String("");
                 }
 
                 while ((StrWork.length()>1)) { // 0x0d
@@ -166,20 +174,19 @@ void parseData()
                                 StrName =  StrWork.substring(0,iValue);
                                 ++iRest;
                                 StrTopic = BaseTopic + StrName;
-                                if ((StrName == "TEMP") || (StrName == "RAIN") || (StrName == "WINSP") || (StrName == "WINGS")) {
+                                if ((StrName == "TEMP") || (StrName == "RAIN") || (StrName == "RAINRATE") || (StrName == "WINSP") || (StrName == "AWINSP") ) {
                                         tmpfloat = strtol(StrValue.c_str(),NULL,16)*0.10; //convert from hex to float and divide by 10 - using multiply as it is faster than divide
                                         StrValue = String(tmpfloat);
                                 } else if   (StrName == "WINDIR") {                         // test if it is HUM, which is int
                                         StrValue = CompassDirTable[atoi(StrValue.c_str())];
-                                } else if (StrName == "HUM") {                         // test if it is HUM, which is int
-                                        if (StrMode == "DKW2012") { // digitech weather station - assume it is a hex humidity, not straight int
-                                                tmpint = strtol(StrValue.c_str(),NULL,16);
+                                } else if   (StrName == "HSTATUS") {                         // test if it is HUM, which is int
+                                              StrValue = HStatusTable[atoi(StrValue.c_str())];
+                                } else if   (StrName == "BFORECAST") {                         // test if it is HUM, which is int
+                                        StrValue = BForecastTable[atoi(StrValue.c_str())];
+                                } else if ((StrName == "BARO") || (StrName == "KWATT") ||(StrName == "WATT") || (StrName == "UV") || (StrName == "LUX")|| (StrName == "WINGS") ){
+                                          tmpint = strtol(StrValue.c_str(),NULL,16);
+                                          StrValue = String(tmpint);
                                         }
-                                        else {
-                                                tmpint = atoi(StrValue.c_str());
-                                        } // end of setting tmpint to the value we want to use & test
-                                        StrValue = String(tmpint);
-                                }
 
                                 MQTTClient.publish(StrTopic.c_str(), StrValue.c_str());
                         } else {
