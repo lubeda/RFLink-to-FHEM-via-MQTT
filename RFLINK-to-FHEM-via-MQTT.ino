@@ -3,13 +3,16 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
+#include <ArduinoOTA.h>
 #include <PubSubClient.h>
 
-// Network Config
+// Key User Configuration here:
 const char* ssid = "MyWiFi"; // network SSID for ESP8266 to connect to
 const char* password = "MyWiFi-Password"; // password for the network above
 const char* mqtt_server = "192.168.178.195"; // address of the MQTT server that we will communicte with */
 char* client_name = "espRFLink"; // production version client name for MQTT login - must be unique on your system
+char* client_version = "0.1";
+
 SoftwareSerial swSer(4, 2, false, 256); // RX=GIO04 & TX=GPIO2
 
 const char buffersize=240;
@@ -37,7 +40,7 @@ void setup_wifi() {
 
         while (WiFi.status() != WL_CONNECTED)
         {
-                delay(500);
+                delay(1000);
         }
 }
 
@@ -81,11 +84,14 @@ void reconnect() {
 }
 
 void setup() {
-        swSer.begin(57600); // this is the baud rate of the RF LINK
 
         setup_wifi();
         MQTTClient.setServer(mqtt_server, 1883);
         MQTTClient.setCallback(callback);
+
+        swSer.begin(57600); // this is the baud rate of the RF LINK
+
+        ArduinoOTA.begin();
 }
 
 void recvWithStartEndMarkers() {
@@ -129,9 +135,10 @@ void parseData()
         MQTTClient.publish(BaseTopic.c_str(), OutData);
 
         StrWork = String(OutData);
-        if ((StrWork.indexOf("STATUS;")>=0) || (StrWork.indexOf("DEBUG;")>=0) {
-            MQTTClient.publish(statusTopic,StrWork.substring(6).c_str());
-            StrWork="";
+        if ((StrWork.indexOf("STATUS;")>=0) || (StrWork.indexOf("DEBUG;")>=0)) {
+                MQTTClient.publish(statusTopic,StrWork.substring(6).c_str());
+                MQTTClient.publish((String(statusTopic) +"/modul").c_str(),(String(client_name) + " (v " +String(client_version) +") IP: " + WiFi.localIP().toString()).c_str());
+                StrWork="";
         }
 
         if (StrWork.startsWith("20"))
@@ -180,13 +187,13 @@ void parseData()
                                 } else if   (StrName == "WINDIR") {                         // test if it is HUM, which is int
                                         StrValue = CompassDirTable[atoi(StrValue.c_str())];
                                 } else if   (StrName == "HSTATUS") {                         // test if it is HUM, which is int
-                                              StrValue = HStatusTable[atoi(StrValue.c_str())];
+                                        StrValue = HStatusTable[atoi(StrValue.c_str())];
                                 } else if   (StrName == "BFORECAST") {                         // test if it is HUM, which is int
                                         StrValue = BForecastTable[atoi(StrValue.c_str())];
-                                } else if ((StrName == "BARO") || (StrName == "KWATT") ||(StrName == "WATT") || (StrName == "UV") || (StrName == "LUX")|| (StrName == "WINGS") ){
-                                          tmpint = strtol(StrValue.c_str(),NULL,16);
-                                          StrValue = String(tmpint);
-                                        }
+                                } else if ((StrName == "BARO") || (StrName == "KWATT") ||(StrName == "WATT") || (StrName == "UV") || (StrName == "LUX")|| (StrName == "WINGS") ) {
+                                        tmpint = strtol(StrValue.c_str(),NULL,16);
+                                        StrValue = String(tmpint);
+                                }
 
                                 MQTTClient.publish(StrTopic.c_str(), StrValue.c_str());
                         } else {
@@ -207,4 +214,5 @@ void loop() {
                 reconnect();
         }
         MQTTClient.loop();
+        ArduinoOTA.handle();
 }
